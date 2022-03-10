@@ -602,12 +602,13 @@ Texture game_background, game_map, exploded_texture, shadow_caught_texture;
 Entity player;
 vector<SDL_Rect> platform(17);
 vector<Entity> skull(MAX_SKULL), reaper(MAX_REAPER);
+Button pause_game, resume_game, exit_game;
+Mix_Chunk* exploded_sound = nullptr;
+Mix_Chunk* shadow_caught_sound = nullptr;
 
 //high score
 Texture high_score_background, high_score_title;
 vector<pair<string, Uint32>> score_data;
-
-
 
 void init() {
 	SDL_Init(SDL_INIT_EVERYTHING);
@@ -786,6 +787,14 @@ void close() {
 	for(auto& e : reaper) e.free();
 	reaper.resize(0);
 	reaper_curse.resize(0);
+	exploded_texture.free();
+	shadow_caught_texture.free();
+	pause_game.free();
+	resume_game.free();
+	exit_game.free();
+	Mix_FreeChunk(exploded_sound);
+	Mix_FreeChunk(shadow_caught_sound);
+	exploded_sound = shadow_caught_sound = nullptr;
 
 	//close instruction region
 	instruction_background.free();
@@ -921,11 +930,11 @@ int main(int argc, char** argv) {
 			}
 			break;
 
-			//game play part
+		//game play part
 		case PLAY:
 			break;
 
-			//instruction part
+		//instruction part
 		case INSTRUCTION:
 			while(SDL_PollEvent(&e) != 0) {
 				if(e.type == SDL_QUIT) {
@@ -964,7 +973,7 @@ int main(int argc, char** argv) {
 			}
 			break;
 
-			//high score part
+		//high score part
 		case HIGH_SCORE:
 			while(SDL_PollEvent(&e) != 0) {
 				if(e.type == SDL_QUIT) {
@@ -1020,6 +1029,4 @@ int main(int argc, char** argv) {
 			}
 			break;
 	}
-	//close();
-	//return 0;
 }
