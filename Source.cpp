@@ -607,17 +607,7 @@ vector<Entity> skull(MAX_SKULL), reaper(MAX_REAPER);
 Texture high_score_background, high_score_title;
 vector<pair<string, Uint32>> score_data;
 
-void updateScoreData() {
-	ifstream old_data("high_score_data.txt");
-	string data_name;
-	Uint32 data_time;
-	while(!old_data.eof()) {
-		old_data >> data_name >> data_time;
-		score_data.emplace_back(data_name, data_time);
-	}
-	score_data.pop_back();
-	score_data.resize(5);
-}
+
 
 void init() {
 	SDL_Init(SDL_INIT_EVERYTHING);
@@ -826,10 +816,23 @@ void resetGame() {
 	EXPLODED = SHADOW_CAUGHT = DEAD = false;
 }
 
-void refreshScore() {
-	score_data.emplace_back(player_name, survival_time);
-	sort(begin(score_data), end(score_data), [](pair<string, Uint32> a, pair<string, Uint32> b) {return a.second > b.second; });
-	score_data.resize(5);
+void updateScoreData() {
+	if(score_data.size() != 0) {
+		score_data.emplace_back(player_name, survival_time);
+		sort(begin(score_data), end(score_data), [](pair<string, Uint32> a, pair<string, Uint32> b) {return a.second > b.second; });
+		score_data.resize(5);
+	}
+	else {
+		ifstream old_data("high_score_data.txt");
+		string data_name;
+		Uint32 data_time;
+		while(!old_data.eof()) {
+			old_data >> data_name >> data_time;
+			score_data.emplace_back(data_name, data_time);
+		}
+		score_data.pop_back();
+		score_data.resize(5);
+	}
 }
 
 string timeFormat(Uint32 time) {
