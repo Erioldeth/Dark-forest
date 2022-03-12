@@ -1,5 +1,3 @@
-//https://TOKEN@github.com/USERNAME/REPO.git
-
 #include<SDL.h>
 #include<SDL_image.h>
 #include<SDL_ttf.h>
@@ -1350,8 +1348,28 @@ int main(int argc, char** argv) {
 
 					SDL_RenderPresent(renderer);
 
-					SDL_Delay(100);
+					SDL_Delay(50);
 				}
+				SDL_Delay(500);
+
+				for(Uint8 frame = 0, alpha = 255; frame <= 17; frame++, alpha -= 15) {
+					if(SDL_PollEvent(&e) != 0 && e.type == SDL_QUIT) {
+						close();
+						return 0;
+					}
+
+					dead_background.setAlpha(alpha);
+
+					SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+					SDL_RenderClear(renderer);
+
+					dead_background.render(0, 0);
+
+					SDL_RenderPresent(renderer);
+
+					SDL_Delay(50);
+				}
+				SDL_Delay(500);
 
 				option = MENU;
 				SDL_Delay(1000);
