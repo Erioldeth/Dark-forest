@@ -14,8 +14,8 @@ using namespace std;
 const int SCREEN_WIDTH = 960;
 const int SCREEN_HEIGHT = 640;
 const int ACCELERATOR = 1;
-const int MAX_SKULL = 5;
-const int MAX_REAPER = 2;
+const int MAX_SKULL = 7;
+const int MAX_REAPER = 3;
 int identification = 0;
 bool EXPLODED = false, SHADOW_CAUGHT = false, DEAD = false;
 
@@ -409,11 +409,7 @@ public:
 		if(leftA >= rightB || rightA <= leftB || bottomA <= topB || topA >= bottomB) return false;
 
 		if(followPlayer) {
-			if((leftB < rightA && (leftB + (player.entityWidth() >> 1) >= leftA || leftB + (player.entityWidth() >> 1) <= rightA)) &&
-			   bottomB > topA &&
-			   topB < topA &&
-			   !player.onGround) {
-				//
+			if((leftB < rightA && (leftB + (player.entityWidth() >> 1) >= leftA || leftB + (player.entityWidth() >> 1) <= rightA)) && bottomB > topA && topB < topA && !player.onGround) {
 				Mix_HaltChannel(3);
 				Mix_PlayChannel(3, die, 0);
 				player.velY = -10;
@@ -424,7 +420,6 @@ public:
 				SDL_RenderPresent(renderer);
 				SDL_Delay(50);
 				return false;
-				//
 			}
 		}
 		return true;
@@ -594,16 +589,13 @@ TTF_Font* deco_font;
 Mix_Chunk* touch_button = nullptr;
 Mix_Chunk* click_button = nullptr;
 Button back;
-bool touch_back = false, lock_back_button_sound = false;
+bool touch_back = false;
 
 //menu
 Texture menu_background, menu_title;
 Button play, instruction, high_score;
 Mix_Music* menu_music = nullptr;
 bool touch_play = false, touch_instruction = false, touch_high_score = false, lock_menu_button_sound = false;
-
-//instruction
-Texture instruction_background;
 
 //game play
 Timer survive_clock;
@@ -619,9 +611,15 @@ Mix_Chunk* shadow_caught_sound = nullptr;
 Button pause_game, resume_game, exit_game;
 bool touch_pause = false, lock_pause_button_sound = false, touch_resume = false, touch_exit = false, lock_resume_and_exit_button_sound = false;
 
+//instruction
+Texture instruction_background;
+bool lock_instruction_button_sound = false;
+
 //high score
 Texture high_score_background, high_score_title;
+Button resetScore;
 vector<pair<string, Uint32>> score_data;
+bool touch_reset = false, lock_high_score_button_sound = false;
 
 void init() {
 	SDL_Init(SDL_INIT_EVERYTHING);
@@ -794,6 +792,10 @@ void loadMedia() {
 	//high score title
 	high_score_title.loadFromRenderedText("high score", deco_font, {125,60,152});
 	high_score_title.setSize(250, 100);
+	//reset button
+	resetScore.textureFromText("Reset", button_font, {255,255,255});
+	resetScore.setButtonSize(BUTTON_WIDTH, BUTTON_HEIGHT);
+	resetScore.setPosition((SCREEN_WIDTH - 25 - resetScore.buttonWidth()), 25);
 }
 void close() {
 	//close shared items
@@ -854,6 +856,7 @@ void close() {
 	score_data.resize(0);
 	high_score_background.free();
 	high_score_title.free();
+	resetScore.free();
 
 	//close renderer and window
 	SDL_DestroyRenderer(renderer);
@@ -1016,8 +1019,6 @@ int main(int argc, char** argv) {
 		case PLAY:
 			resetGame();
 			pause_game.setButtonColor(255, 255, 255);
-			resume_game.setButtonColor(255, 255, 255);
-			exit_game.setButtonColor(255, 255, 255);
 
 			Mix_FadeOutMusic(1500);
 
@@ -1246,6 +1247,10 @@ int main(int argc, char** argv) {
 						game_background.render(0, 0);
 						game_map.render(0, 0);
 
+						player.renderEntity();
+
+						shadow_caught_texture.render(player.entityPosition().x - 5, player.entityPosition().y, &shadowSprite);
+
 						for(int i = 0; i < MAX_SKULL; i++) {
 							if(skull_curse[i]) skull[i].renderEntity();
 							else skull[i].alert();
@@ -1254,9 +1259,6 @@ int main(int argc, char** argv) {
 							if(reaper_curse[i]) reaper[i].renderEntity();
 							else reaper[i].alert();
 						}
-						player.renderEntity();
-
-						shadow_caught_texture.render(player.entityPosition().x - 5, player.entityPosition().y, &shadowSprite);
 
 						showTime();
 
@@ -1284,6 +1286,8 @@ int main(int argc, char** argv) {
 						game_background.render(0, 0);
 						game_map.render(0, 0);
 
+						exploded_texture.render(player.entityPosition().x - 5, player.entityPosition().y, &explodeSprite);
+
 						for(int i = 0; i < MAX_SKULL; i++) {
 							if(skull_curse[i]) skull[i].renderEntity();
 							else skull[i].alert();
@@ -1292,8 +1296,6 @@ int main(int argc, char** argv) {
 							if(reaper_curse[i]) reaper[i].renderEntity();
 							else reaper[i].alert();
 						}
-
-						exploded_texture.render(player.entityPosition().x - 5, player.entityPosition().y, &explodeSprite);
 
 						showTime();
 
@@ -1371,14 +1373,132 @@ int main(int argc, char** argv) {
 				}
 				SDL_Delay(500);
 
+				bool confirmedName = false;
+				SDL_StartTextInput();
+				while(!confirmedName) {
+					while(SDL_PollEvent(&e) != 0) switch(e.type) {
+						case SDL_QUIT:
+							close(); return 0;
+						case SDL_KEYDOWN:
+							switch(e.key.keysym.sym) {
+								case SDLK_BACKSPACE:
+									if(player_name.length() > 0) player_name.pop_back();
+									break;
+								case SDLK_c:
+									if(SDL_GetModState() && KMOD_CTRL) SDL_SetClipboardText(player_name.c_str());
+									break;
+								case SDLK_x:
+									if(SDL_GetModState() && KMOD_CTRL) {
+										SDL_SetClipboardText(player_name.c_str());
+										player_name = "";
+									}
+									break;
+								case SDLK_v:
+									if(SDL_GetModState() && KMOD_CTRL) player_name += SDL_GetClipboardText();
+									break;
+								case SDLK_RETURN:
+									confirmedName = true;
+									break;
+							}
+							break;
+						case SDL_TEXTINPUT:
+							if(!(SDL_GetModState() && KMOD_CTRL && (e.text.text[0] == 'c' || e.text.text[0] == 'C' || e.text.text[0] == 'x' || e.text.text[0] == 'X' || e.text.text[0] == 'v' || e.text.text[0] == 'V'))) player_name += e.text.text;
+							break;
+					}
+					if(!confirmedName) {
+						SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+						SDL_RenderClear(renderer);
+
+						if(player_name == "") player_name = " ";
+						Texture nameTexture, instrucTexture;
+
+						instrucTexture.loadFromRenderedText("Enter your name", deco_font, {255,0,0});
+						instrucTexture.setSize(450, 100);
+						instrucTexture.render((SCREEN_WIDTH - instrucTexture.getWidth()) / 2, 210);
+
+						nameTexture.loadFromRenderedText(player_name, deco_font, {91,44,111});
+						nameTexture.setSize(30 * (int)player_name.length(), 100);
+						nameTexture.render((SCREEN_WIDTH - nameTexture.getWidth()) / 2, 330);
+
+						SDL_RenderPresent(renderer);
+
+						if(player_name == " ") player_name = "";
+						nameTexture.free();
+						instrucTexture.free();
+					}
+				}
+				SDL_StopTextInput();
+
+				while(!player_name.empty() && player_name[0] == ' ') player_name.erase(0, 1);
+				while(!player_name.empty() && player_name.back() == ' ') player_name.pop_back();
+
+				updateScoreData();
+
+				for(Uint8 frame = 0, alpha = 0; frame <= 17; frame++, alpha += 15) {
+					if(SDL_PollEvent(&e) != 0 && e.type == SDL_QUIT) {
+						close(); return 0;
+					}
+
+					transition_screen.setAlpha(alpha);
+
+					SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+					SDL_RenderClear(renderer);
+
+					if(player_name == "") player_name = " ";
+					Texture textTexture, instrucTexture;
+
+					instrucTexture.loadFromRenderedText("Enter your name", deco_font, {255,0,0});
+					instrucTexture.setSize(450, 100);
+					instrucTexture.render((SCREEN_WIDTH - instrucTexture.getWidth()) / 2, 210);
+
+					textTexture.loadFromRenderedText(player_name, deco_font, {91,44,111});
+					textTexture.setSize(30 * (int)player_name.length(), 100);
+					textTexture.render((SCREEN_WIDTH - textTexture.getWidth()) / 2, 330);
+
+					transition_screen.render(0, 0);
+
+					SDL_RenderPresent(renderer);
+
+					if(player_name == " ") player_name = "";
+					textTexture.free();
+					instrucTexture.free();
+
+					SDL_Delay(50);
+				}
+				SDL_Delay(500);
+
+				play.setButtonColor(255, 255, 255);
+				for(Uint8 frame = 0, alpha = 255; frame <= 17; frame++, alpha -= 15) {
+					if(SDL_PollEvent(&e) != 0 && e.type == SDL_QUIT) {
+						close(); return 0;
+					}
+
+					transition_screen.setAlpha(alpha);
+
+					SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+					SDL_RenderClear(renderer);
+
+					menu_background.render(0, 0);
+					menu_title.render((SCREEN_WIDTH - menu_title.getWidth()) / 2, 25);
+
+					play.renderButton();
+					instruction.renderButton();
+					high_score.renderButton();
+
+					transition_screen.render(0, 0);
+
+					SDL_RenderPresent(renderer);
+
+					SDL_Delay(50);
+				}
+				SDL_Delay(500);
+
 				option = MENU;
-				SDL_Delay(1000);
 			}
 			else {
 				for(Uint8 frame = 0, alpha = 0; frame <= 17; frame++, alpha += 15) {
 					if(SDL_PollEvent(&e) != 0 && e.type == SDL_QUIT) {
-						close();
-						return 0;
+						close(); return 0;
 					}
 
 					transition_screen.setAlpha(alpha);
@@ -1412,8 +1532,7 @@ int main(int argc, char** argv) {
 				play.setButtonColor(255, 255, 255);
 				for(Uint8 frame = 0, alpha = 255; frame <= 17; frame++, alpha -= 15) {
 					if(SDL_PollEvent(&e) != 0 && e.type == SDL_QUIT) {
-						close();
-						return 0;
+						close(); return 0;
 					}
 
 					transition_screen.setAlpha(alpha);
@@ -1470,12 +1589,12 @@ int main(int argc, char** argv) {
 				back.renderButton();
 				SDL_RenderPresent(renderer);
 				if(touch_back) {
-					if(!lock_back_button_sound) {
-						lock_back_button_sound = true;
+					if(!lock_instruction_button_sound) {
+						lock_instruction_button_sound = true;
 						Mix_PlayChannel(1, touch_button, 0);
 					}
 				}
-				else lock_back_button_sound = false;
+				else lock_instruction_button_sound = false;
 			}
 			break;
 
@@ -1486,6 +1605,7 @@ int main(int argc, char** argv) {
 					close(); return 0;
 				}
 				back.handleEvent(&e);
+				resetScore.handleEvent(&e);
 			}
 			switch(back.getCurrentSprite()) {
 				case MOUSE_OUT:
@@ -1502,12 +1622,29 @@ int main(int argc, char** argv) {
 					Mix_PlayChannel(1, click_button, 0);
 					break;
 			}
+			switch(resetScore.getCurrentSprite()) {
+				case MOUSE_OUT:
+					touch_reset = false;
+					resetScore.setButtonColor(255, 255, 255);
+					break;
+				case MOUSE_IN:
+					touch_reset = true;
+					resetScore.setButtonColor(255, 0, 0);
+					break;
+				case MOUSE_DOWN:
+					score_data.clear();
+					score_data.resize(5);
+					resetScore.reset();
+					Mix_PlayChannel(1, click_button, 0);
+					break;
+			}
 			if(option == HIGH_SCORE) {
 				SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 				SDL_RenderClear(renderer);
 				high_score_background.render(0, 0);
 				high_score_title.render((SCREEN_WIDTH - high_score_title.getWidth()) / 2, 75);
 				back.renderButton();
+				resetScore.renderButton();
 				for(int i = 0; i < score_data.size(); i++) {
 					stringstream text;
 					text.str("");
@@ -1525,13 +1662,13 @@ int main(int argc, char** argv) {
 					data_information.free();
 				}
 				SDL_RenderPresent(renderer);
-				if(touch_back) {
-					if(!lock_back_button_sound) {
-						lock_back_button_sound = true;
+				if(touch_back || touch_reset) {
+					if(!lock_high_score_button_sound) {
+						lock_high_score_button_sound = true;
 						Mix_PlayChannel(1, touch_button, 0);
 					}
 				}
-				else lock_back_button_sound = false;
+				else lock_high_score_button_sound = false;
 			}
 			break;
 	}
