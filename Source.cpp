@@ -1326,15 +1326,6 @@ int main(int argc, char** argv) {
 					game_background.render(0, 0);
 					game_map.render(0, 0);
 
-					for(int i = 0; i < MAX_SKULL; i++) {
-						if(skull_curse[i]) skull[i].renderEntity();
-						else skull[i].alert();
-					}
-					for(int i = 0; i < MAX_REAPER; i++) {
-						if(reaper_curse[i]) reaper[i].renderEntity();
-						else reaper[i].alert();
-					}
-
 					if(SHADOW_CAUGHT) {
 						SDL_Rect sprite = {2816,0,256,256};
 						shadow_caught_texture.render(player.entityPosition().x - 5, player.entityPosition().y, &sprite);
@@ -1342,6 +1333,15 @@ int main(int argc, char** argv) {
 					else {
 						SDL_Rect sprite = {1664,0,128,128};
 						exploded_texture.render(player.entityPosition().x - 5, player.entityPosition().y, &sprite);
+					}
+
+					for(int i = 0; i < MAX_SKULL; i++) {
+						if(skull_curse[i]) skull[i].renderEntity();
+						else skull[i].alert();
+					}
+					for(int i = 0; i < MAX_REAPER; i++) {
+						if(reaper_curse[i]) reaper[i].renderEntity();
+						else reaper[i].alert();
 					}
 
 					showTime();
