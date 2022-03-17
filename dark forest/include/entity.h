@@ -13,7 +13,7 @@ enum entityMovement {
 };
 class Entity {
 	int ID, posX, posY, velX, velY, entityVel, currentSprite, currenSubSprite;
-	bool autonomous, followPlayer, onGround, sit, motionDelay;
+	bool autonomous, followPlayer, onGround, jump, sit, motionDelay;
 
 	Texture entityTexture;
 
@@ -38,7 +38,7 @@ public:
 
 		moveAround = die = nullptr;
 
-		motionDelay = autonomous = followPlayer = onGround = sit = false;
+		motionDelay = autonomous = followPlayer = onGround = jump = sit = false;
 		flip = SDL_FLIP_NONE;
 
 		subSprite.resize(TOTAL_MOVEMENT);
@@ -165,16 +165,17 @@ public:
 					velX += entityVel;
 					break;
 				case SDLK_w:
-					if(onGround && !sit) {
+					if(onGround && !sit && !jump) {
 						velY = -15;
 						onGround = false;
+						jump = true;
 					}
 					break;
 				case SDLK_s:
-					if(onGround) {
+					if(onGround && !jump) {
 						sit = true;
 						posY += entityHeight() * 1 / 3;
-						entityTexture.setSize(entityWidth(), entityHeight() * 2 / 3);
+						entityTexture.setSize(entityWidth(), (entityHeight() << 1) / 3);
 						collideRegion.y = posY;
 						collideRegion.h = entityHeight();
 					}
@@ -189,10 +190,13 @@ public:
 				case SDLK_d:
 					velX -= entityVel;
 					break;
+				case SDLK_w:
+					jump = false;
+					break;
 				case SDLK_s:
 					if(sit) {
 						sit = false;
-						entityTexture.setSize(entityWidth(), entityHeight() * 3 >> 1);
+						entityTexture.setSize(entityWidth(), (entityHeight() * 3) >> 1);
 						posY -= entityHeight() * 1 / 3;
 						collideRegion.y = posY;
 						collideRegion.h = entityHeight();
@@ -214,6 +218,92 @@ public:
 		if(sit) currentSprite = SIT;
 		//reset animation frame
 		if(currentSprite != oldSprite) currenSubSprite = 0;
+	}
+	void move(std::vector<SDL_Rect>& platform) {
+		if(!motionDelay) {
+			if(!sit && velX != 0) {
+				posX += velX;
+				if(!Mix_Playing(2) && onGround) Mix_PlayChannel(2, moveAround, 0);
+			}
+			//else Mix_HaltChannel(2);
+			else Mix_FadeOutChannel(2, 400);
+			if(!onGround) {
+				posY += velY;
+				velY += ACCELERATOR;
+				if(velY > 15) velY = 15;
+				Mix_HaltChannel(2);
+			}
+			//check player collide with any platform
+			bool collideBottom = false;
+			for(auto& collider : platform) {
+				int leftA = posX,
+					rightA = posX + entityWidth(),
+					topA = posY,
+					bottomA = posY + entityHeight();
+				int leftB = collider.x,
+					rightB = collider.x + collider.w,
+					topB = collider.y,
+					bottomB = collider.y + collider.h;
+				//vertical collide
+				if(leftA < rightB && rightA > leftB) {
+					if(bottomA >= topB && topA + (entityTexture.textureHeight() >> 1) < topB) {
+						bottomA = topB;
+						topA = posY = topB - entityTexture.textureHeight();
+						collideBottom = true;
+					}
+					else if(topA <= bottomB && bottomA - (entityTexture.textureHeight() >> 1) > bottomB) {
+						topA = posY = bottomB;
+						bottomA = bottomB + entityTexture.textureHeight();
+						velY = 1;
+					}
+				}
+				//horizontal collide
+				if(bottomA > topB && topA < bottomB) {
+					if(leftA <= rightB && rightA > rightB) {
+						leftA = posX = rightB;
+						rightA = rightB + entityTexture.textureWidth();
+					}
+					else if(rightA >= leftB && leftA < leftB) {
+						rightA = leftB;
+						leftA = posX = leftB - entityTexture.textureWidth();
+					}
+				}
+			}
+			if(!collideBottom && posY + entityHeight() < SCREEN_HEIGHT) onGround = false;
+			else onGround = true;
+			//check player in screen
+			if(posX < 0) {
+				posX = 0;
+			}
+			else if(posX + entityTexture.textureWidth() > SCREEN_WIDTH) {
+				posX = SCREEN_WIDTH - entityTexture.textureWidth();
+			}
+			if(posY < 0) {
+				posY = 0;
+				velY = 1;
+			}
+			else if(posY + entityTexture.textureHeight() > SCREEN_HEIGHT) {
+				posY = SCREEN_HEIGHT - entityTexture.textureHeight();
+				onGround = true;
+			}
+			//check state (on ground/on air) to change gravity
+			if(onGround) {
+				if(jump) {
+					velY = -15;
+					onGround = false;
+				}
+				else velY = 0;
+				if(!sit && !jump) {
+					if(velX == 0) currentSprite = STAY_STILL;
+					else if(velX > 0) currentSprite = MOVE_RIGHT;
+					else currentSprite = MOVE_LEFT;
+				}
+			}
+			collideRegion.x = posX;
+			collideRegion.y = posY;
+		}
+		currenSubSprite = (currenSubSprite + 1) % subSprite[currentSprite];
+		motionDelay = (motionDelay ? false : true);
 	}
 	bool collided(Entity& player) {
 		int leftA = collideRegion.x,
@@ -308,88 +398,6 @@ public:
 		currenSubSprite = (currenSubSprite + 1) % subSprite[currentSprite];
 		motionDelay = (motionDelay ? false : true);
 	}
-	void move(std::vector<SDL_Rect>& platform) {
-		if(!motionDelay) {
-			if(!sit && velX != 0) {
-				posX += velX;
-				if(!Mix_Playing(2) && onGround) Mix_PlayChannel(2, moveAround, 0);
-			}
-			//else Mix_HaltChannel(2);
-			else Mix_FadeOutChannel(2, 400);
-			if(!onGround) {
-				posY += velY;
-				velY += ACCELERATOR;
-				if(velY > 15) velY = 15;
-				Mix_HaltChannel(2);
-			}
-			//check player collide with any platform
-			bool collideBottom = false;
-			int leftA = posX,
-				rightA = posX + entityWidth(),
-				topA = posY,
-				bottomA = posY + entityHeight();
-			for(auto& collider : platform) {
-				int leftB = collider.x,
-					rightB = collider.x + collider.w,
-					topB = collider.y,
-					bottomB = collider.y + collider.h;
-				//vertical collide
-				if(leftA < rightB && rightA > leftB) {
-					if(bottomA >= topB && topA + (entityTexture.textureHeight() >> 1) < topB) {
-						bottomA = topB;
-						topA = posY = topB - entityTexture.textureHeight();
-						collideBottom = true;
-					}
-					else if(topA <= bottomB && bottomA - (entityTexture.textureHeight() >> 1) > bottomB) {
-						topA = posY = bottomB;
-						bottomA = bottomB + entityTexture.textureHeight();
-						velY = 1;
-					}
-				}
-				//horizontal collide
-				if(bottomA > topB && topA < bottomB) {
-					if(leftA <= rightB && rightA > rightB) {
-						leftA = posX = rightB;
-						rightA = rightB + entityTexture.textureWidth();
-					}
-					else if(rightA >= leftB && leftA < leftB) {
-						rightA = leftB;
-						leftA = posX = leftB - entityTexture.textureWidth();
-					}
-				}
-			}
-			if(!collideBottom && posY + entityHeight() < SCREEN_HEIGHT) onGround = false;
-			else onGround = true;
-			//check player in screen
-			if(posX < 0) {
-				posX = 0;
-			}
-			else if(posX + entityTexture.textureWidth() > SCREEN_WIDTH) {
-				posX = SCREEN_WIDTH - entityTexture.textureWidth();
-			}
-			if(posY < 0) {
-				posY = 0;
-				velY = 1;
-			}
-			else if(posY + entityTexture.textureHeight() > SCREEN_HEIGHT) {
-				posY = SCREEN_HEIGHT - entityTexture.textureHeight();
-				onGround = true;
-			}
-			//check state (on ground/on air) to change gravity
-			if(onGround) {
-				velY = 0;
-				if(!sit) {
-					if(velX == 0) currentSprite = STAY_STILL;
-					else if(velX > 0) currentSprite = MOVE_RIGHT;
-					else currentSprite = MOVE_LEFT;
-				}
-			}
-			collideRegion.x = posX;
-			collideRegion.y = posY;
-		}
-		currenSubSprite = (currenSubSprite + 1) % subSprite[currentSprite];
-		motionDelay = (motionDelay ? false : true);
-	}
 	void alert() {
 		if(followPlayer) reaper_warning.render((posX < 0 ? 0 : SCREEN_WIDTH - reaper_warning.textureWidth()), collideRegion.y - ((reaper_warning.textureHeight() - collideRegion.h) >> 1));
 		else skull_warning.render((posX < 0 ? 0 : SCREEN_WIDTH - skull_warning.textureWidth()), collideRegion.y - ((skull_warning.textureHeight() - collideRegion.h) >> 1));
@@ -400,7 +408,16 @@ public:
 	void resetEntity() {
 		currentSprite = STAY_STILL;
 		currenSubSprite = 0;
-		if(!autonomous) velX = velY = 0;
+		if(autonomous) {
+			if(followPlayer) reaper_curse[ID] = false;
+			else skull_curse[ID] = false;
+			setVeclocity();
+			setPosition();
+		}
+		else {
+			velX = velY = 0;
+			onGround = jump = sit = false;
+		}
 	}
 };
 
