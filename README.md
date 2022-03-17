@@ -9,4 +9,5 @@ Maybe, just maybe, someone will come and save you...
 # menu screen
 ![menu](menu.png)
 # game play
-![game](game_play.png)
+![game1](game_play1.png)
+![game2](game_play2.png)
