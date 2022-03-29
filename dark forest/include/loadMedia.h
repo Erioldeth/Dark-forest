@@ -190,7 +190,7 @@ void loadMedia() {
 
 		color_picker[i].textureFromFile("texture/color_picker.png");
 		color_picker[i].setButtonSize(64, 64);
-		color_picker[i].setPosition(375, 318 + 150 * i);
+		color_picker[i].setPosition(293, 318 + 150 * i);
 	}
 
 	model_frame.loadTextureFromFile("texture/model_frame.png", 255);
