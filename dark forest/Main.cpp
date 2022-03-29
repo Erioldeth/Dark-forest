@@ -1013,6 +1013,7 @@ int main(int argc, char** argv) {
 
 		//high score part
 		case HIGH_SCORE:
+			Texture info_texture;
 			while(option == HIGH_SCORE) {
 				while(SDL_PollEvent(&e) != 0) {
 					if(e.type == SDL_QUIT) {
@@ -1059,16 +1060,7 @@ int main(int argc, char** argv) {
 					back.renderButton();
 					reset.renderButton();
 					for(int i = 0; i < 5; i++) {
-						std::stringstream text;
-						text.str("");
-						text << (get<2>(score_data[i]) != 0 ? get<0>(score_data[i]) : "<name>") << std::string(5, ' ');
-						if(get<2>(score_data[i]) == 0) text << "<mode>";
-						else switch(get<1>(score_data[i])) {
-							case EASY: text << "easy"; break;
-							case NORMAL: text << "normal"; break;
-							case HARD: text << "hard"; break;
-						}
-						text << std::string(5, ' ') << timeFormat(get<2>(score_data[i]));
+						std::string info_name = "<name>", info_mode = "<mode>", info_time = "<00:00>";
 						SDL_Color text_color;
 						switch(i) {
 							case 0: text_color = {112,41,99}; break;
@@ -1077,11 +1069,29 @@ int main(int argc, char** argv) {
 							case 3: text_color = {192,192,192}; break;
 							case 4: text_color = {205, 127, 50}; break;
 						}
-						Texture data_information;
-						data_information.loadTextureFromText(text.str(), deco_font, text_color);
-						data_information.setTextureSize(20 * (int)text.str().length(), 80);
-						data_information.renderTexture((SCREEN_WIDTH - data_information.textureWidth()) >> 1, 120 + 80 * i);
-						data_information.free();
+						if(get<2>(score_data[i]) != 0) {
+							info_name = get<0>(score_data[i]);
+							if(info_name.length() > 10) info_name = std::string(info_name, 0, 7) + "...";
+
+							switch(get<1>(score_data[i])) {
+								case EASY: info_mode = "easy"; break;
+								case NORMAL: info_mode = "normal"; break;
+								case HARD: info_mode = "hard"; break;
+							}
+
+							info_time = timeFormat(get<2>(score_data[i]));
+						}
+						info_texture.loadTextureFromText(info_name, deco_font, text_color);
+						info_texture.setTextureSize(20 * (int)info_name.length(), 80);
+						info_texture.renderTexture(150 + ((200 - info_texture.textureWidth()) >> 1), 120 + 80 * i);
+
+						info_texture.loadTextureFromText(info_mode, deco_font, text_color);
+						info_texture.setTextureSize(20 * (int)info_mode.length(), 80);
+						info_texture.renderTexture(510 + ((120 - info_texture.textureWidth()) >> 1), 120 + 80 * i);
+
+						info_texture.loadTextureFromText(info_time, deco_font, text_color);
+						info_texture.setTextureSize(20 * (int)info_time.length(), 80);
+						info_texture.renderTexture(710 + ((100 - info_texture.textureWidth()) >> 1), 120 + 80 * i);
 					}
 					SDL_RenderPresent(renderer);
 					if(touch_back || touch_reset) {
@@ -1093,6 +1103,7 @@ int main(int argc, char** argv) {
 					else lock_high_score_button_sound = false;
 				}
 			}
+			info_texture.free();
 			break;
 	}
 	close();
