@@ -956,7 +956,7 @@ int main(int argc, char** argv) {
 						case MOUSE_DOWN:
 							int x, y;
 							SDL_GetMouseState(&x, &y);
-							SDL_Color new_color = getColor((x - 375) << 2, (y - (318 + 150 * i)) << 2);
+							SDL_Color new_color = getColor((x - 293) << 2, (y - (318 + 150 * i)) << 2);
 							color_code[i][0] = new_color.r;
 							color_code[i][1] = new_color.g;
 							color_code[i][2] = new_color.b;
