@@ -61,7 +61,6 @@ int main(int argc, char** argv) {
 	loadMedia();
 	SDL_Event e;
 	while(true) switch(option) {
-		//menu part
 		case MENU:
 			if(!Mix_PlayingMusic()) {
 				Mix_FreeMusic(menu_music);
@@ -146,7 +145,6 @@ int main(int argc, char** argv) {
 			}
 			break;
 
-		//game play part
 		case PLAY:
 			Mix_FadeOutMusic(1500);
 
@@ -846,7 +844,6 @@ int main(int argc, char** argv) {
 			resetGame();
 			break;
 
-		//setting part
 		case SETTING:
 			model_movement = 0;
 			particle_model.reset();
@@ -1011,7 +1008,6 @@ int main(int argc, char** argv) {
 			}
 			break;
 
-		//high score part
 		case HIGH_SCORE:
 			Texture info_texture;
 			while(option == HIGH_SCORE) {
