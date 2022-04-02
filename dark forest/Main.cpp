@@ -943,25 +943,16 @@ int main(int argc, char** argv) {
 							Mix_PlayChannel(1, click_button, 0);
 							break;
 					}
-					if(picker_activated[i]) switch(color_picker[i].getCurrentState()) {
-						case MOUSE_OUT:
-							touch_picker[i] = false;
-							break;
-						case MOUSE_IN:
-							touch_picker[i] = true;
-							break;
-						case MOUSE_DOWN:
-							int x, y;
-							SDL_GetMouseState(&x, &y);
-							SDL_Color new_color = getColor((x - 293) << 2, (y - (318 + 150 * i)) << 2);
-							color_code[i][0] = new_color.r;
-							color_code[i][1] = new_color.g;
-							color_code[i][2] = new_color.b;
-							color_picker[i].setButtonState(MOUSE_OUT);
-							touch_picker[i] = false;
-							picker_activated[i] = false;
-							Mix_PlayChannel(1, click_button, 0);
-							break;
+					if(picker_activated[i] && color_picker[i].getCurrentState() == MOUSE_DOWN) {
+						int x, y;
+						SDL_GetMouseState(&x, &y);
+						SDL_Color new_color = getColor((x - 293) << 2, (y - (318 + 150 * i)) << 2);
+						color_code[i][0] = new_color.r;
+						color_code[i][1] = new_color.g;
+						color_code[i][2] = new_color.b;
+						color_picker[i].setButtonState(MOUSE_OUT);
+						picker_activated[i] = false;
+						Mix_PlayChannel(1, click_button, 0);
 					}
 					player.setEntityColor(color_code[0][0], color_code[0][1], color_code[0][2]);
 					player_model.setTextureColor(color_code[0][0], color_code[0][1], color_code[0][2]);
@@ -997,7 +988,7 @@ int main(int argc, char** argv) {
 					model_movement = (model_movement + 1) % 35;
 
 					SDL_RenderPresent(renderer);
-					if(touch_back || touch_reset || touch_bar[0] || touch_bar[1] || touch_sample[0] || touch_sample[1] || touch_picker[0] || touch_picker[1]) {
+					if(touch_back || touch_reset || touch_bar[0] || touch_bar[1] || touch_sample[0] || touch_sample[1]) {
 						if(!lock_setting_button_sound) {
 							lock_setting_button_sound = true;
 							Mix_PlayChannel(1, touch_button, 0);
