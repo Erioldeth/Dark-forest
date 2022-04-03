@@ -325,7 +325,7 @@ public:
 		}
 
 		currenMovement = (currenMovement + 1) % (int)entitySpriteClip[currentAction].size();
-		motionDelay = (motionDelay ? false : true);
+		motionDelay ^= true;
 	}
 
 	bool collided(Entity& player) {
@@ -399,7 +399,7 @@ public:
 			}
 		}
 		currenMovement = (currenMovement + 1) % (int)entitySpriteClip[currentAction].size();
-		motionDelay = (motionDelay ? false : true);
+		motionDelay ^= true;
 	}
 	void alert() {
 		if(followPlayer) reaper_warning.renderTexture((posX < 0 ? 0 : SCREEN_WIDTH - reaper_warning.textureWidth()), collideRegion.y - ((reaper_warning.textureHeight() - collideRegion.h) >> 1));
