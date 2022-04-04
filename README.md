@@ -11,7 +11,7 @@ Survive for as long as you can
 ![mingw](prerequisite/mingw/mingw2.jpg)
 ## Set path for library
 - extract all zip files in prerequisite folder and put extracted files somewhere else
-- do these steps with all extracted libraries:
+- do these steps to all extracted libraries:
   + copy the path "library_name/lib/x64"
   + go to Control Panel -> System -> Advanced System Setting -> Environment Variable -> Edit path from System variable -> new -> paste the path
   + ![path](prerequisite/lib.png)
