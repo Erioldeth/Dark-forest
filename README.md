@@ -14,6 +14,7 @@ Survive for as long as you can
 - do these steps to all extracted libraries:
   + copy the path "library_name/lib/x64"
   + go to Control Panel -> System -> Advanced System Setting -> Environment Variable -> Edit path from System variable -> new -> paste the path
+  + or you can do this: 
   + ![path](prerequisite/lib.png)
 - save everything
 ## Run the exe file in "dark forest" folder and enjoy the game!
