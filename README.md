@@ -9,14 +9,6 @@ Survive for as long as you can
 - lauch the file to extract (copy the path of extracted folder)
 - go to Control Panel -> System -> Advanced System Setting -> Environment Variable -> Edit path from System variable -> new -> paste the path and save everything
 ![mingw](prerequisite/mingw/mingw2.jpg)
-## Set path for library
-- extract all zip files in prerequisite folder and put extracted files somewhere else
-- do these steps to all extracted libraries:
-  + copy the path "library_name/lib/x64"
-  + go to Control Panel -> System -> Advanced System Setting -> Environment Variable -> Edit path from System variable -> new -> paste the path
-  + or you can do this: 
-  + ![path](prerequisite/lib.png)
-- save everything
 ## Run the exe file in "dark forest" folder and enjoy the game!
 
 
